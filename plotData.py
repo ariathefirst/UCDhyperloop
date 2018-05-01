@@ -3,12 +3,13 @@ import csv
 import re
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
  
-portPath = "/dev/ttyACM0"       # Must match value shown on Arduino IDE
-baud = 115200                     # Must match Arduino baud rate
+portPath = "/dev/tty.usbmodem1411"       # Must match value shown on Arduino IDE
+baud = 9600                     # Must match Arduino baud rate
 timeout = 5                       # Seconds
 filename = "data.csv"
-max_num_readings = 16000
+max_num_readings = 50
 num_signals = 1
  
  
@@ -31,7 +32,7 @@ def read_serial_data(serial):
     readings_left = True
     timeout_reached = False
     
-    while readings_left and not timeout_reached:
+    while readings_left and not timeout_reached: # will continuously read data as long as not timeout_reached
         serial_line = serial.readline()
         if serial_line == '':
             timeout_reached = True
@@ -63,7 +64,10 @@ def clean_serial_data(data):
     clean_data = []
     
     for line in data:
-        line_data = re.findall("\d*\.\d*|\d*",line) # Find all digits
+#        line.decode('ascii') # converts arduino binary strings to normal string
+        print(line)
+#        line_data = re.findall("\d*\.\d*|\d*",line) # Find all digits
+        line_data = re.findall(r'\d+', line.decode('ascii')) 
         line_data = [float(element) for element in line_data if is_number(element)] # Convert strings to float
         if len(line_data) >= 2:
             clean_data.append(line_data)
@@ -76,7 +80,10 @@ def save_to_csv(data, filename):
     """
     with open(filename, 'wb') as csvfile:
         csvwrite = csv.writer(csvfile)
+        print(csvfile)
         csvwrite.writerows(data)
+#    np.savetxt('data', filename, fmt='%s') # .csv is a dataframe
+
  
 def gen_col_list(num_signals):
     """
@@ -130,9 +137,15 @@ print ("Cleaning data...")
 clean_data =  clean_serial_data(serial_data)
  
 print ("Saving to csv...")
-save_to_csv(clean_data, filename)
+np.savetxt('filename.csv', clean_data, fmt='%s') # .csv is a dataframe
+#save_to_csv(clean_data, filename)
+#save_to_csv(serial_data, filename) # changed to serial_data temp to debug clean_data
+
  
+## need to plot csv in a loop at a time step specified by the end user
+## need to figure out how to pass that time step parameter to this program
+
 print ("Plotting data...")
-#simple_plot(filename, (0,1,2), ['time (s)', 'voltage1', 'voltage2'])
-#simple_plot(filename, (0,1), ['time (s)', 'voltage1'])
+# #simple_plot(filename, (0,1,2), ['time (s)', 'voltage1', 'voltage2'])
+# #simple_plot(filename, (0,1), ['time (s)', 'voltage1'])
 plot_csv(filename, gen_col_list(num_signals))
