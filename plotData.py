@@ -4,6 +4,8 @@ import re
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from io import StringIO
+
  
 portPath = "/dev/tty.usbmodem1411"       # Must match value shown on Arduino IDE
 baud = 9600                     # Must match Arduino baud rate
@@ -137,7 +139,7 @@ print ("Cleaning data...")
 clean_data =  clean_serial_data(serial_data)
  
 print ("Saving to csv...")
-np.savetxt('filename.csv', clean_data, fmt='%s') # .csv is a dataframe
+np.savetxt('filename', clean_data, fmt='%s') # .csv is a dataframe
 #save_to_csv(clean_data, filename)
 #save_to_csv(serial_data, filename) # changed to serial_data temp to debug clean_data
 
@@ -148,4 +150,8 @@ np.savetxt('filename.csv', clean_data, fmt='%s') # .csv is a dataframe
 print ("Plotting data...")
 # #simple_plot(filename, (0,1,2), ['time (s)', 'voltage1', 'voltage2'])
 # #simple_plot(filename, (0,1), ['time (s)', 'voltage1'])
-plot_csv(filename, gen_col_list(num_signals))
+#plot_csv(filename, gen_col_list(num_signals))
+csv = csv.reader(filename)
+df = pd.read_csv('filename')
+df.to_csv('filename.csv')
+
