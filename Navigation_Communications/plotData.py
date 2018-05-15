@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from io import StringIO
 import re
+import pickle
 
  
 portPath = "/dev/tty.usbmodem1411"       # Must match value shown on Arduino IDE
@@ -18,23 +19,24 @@ max_num_readings = 10
 num_signals = 1
 
 
-# fig = plt.figure()
-# ax1 = fig.add_subplot(1,1,1)
+fig = plt.figure()
+ax1 = fig.add_subplot(1,1,1)
 
-# def animate(i):
-#     pullData = open("filename","r").read()
-#     dataArray = pullData.split('\n')
-#     xar = []
-#     yar = []
-#     for eachLine in dataArray:
-#         if len(eachLine)>1:
-#             x,y = eachLine.split(',')
-#             xar.append(int(x))
-#             yar.append(int(y))
-#     ax1.clear()
-#     ax1.plot(xar,yar)
-# ani = animation.FuncAnimation(fig, animate, interval=1000)
-# plt.show() 
+def animate(i):
+    pullData = open("zVals.txt","r").read()
+    dataArray = pullData.split('\n')
+    xar = []
+    yar = []
+    for eachLine in dataArray:
+        if len(eachLine)>1:
+            x = eachLine[0]
+            y = eachLine[1]
+            xar.append((x))
+            yar.append((y))
+
+
+ani = animation.FuncAnimation(fig, animate, interval=1000)
+plt.show() 
  
 def create_serial_obj(portPath, baud_rate, tout):
     """
@@ -96,9 +98,23 @@ def clean_serial_data(data):
 
         if len(line_data) > 0:
             clean_data.append(line_data)
-    print(clean_data)
+            
+    print("clean_data is \n", clean_data)
+    print("clean_data[0] is \n", clean_data[0])
+
     return clean_data           
  
+def get_z_values(clean_data):
+    zVals = np.zeros((10,2))
+    i = 0
+    for row in clean_data:
+        if len(row) == 7:
+            zVals[i][0] = i + 1 # ith row 0th num is time step
+            zVals[i][1] = row[2] # ith row 1st num is zVal
+            i += 1
+            print(zVals[i])
+    return zVals
+    
 # def gen_col_list(num_signals):
 #     """
 #     Given the number of signals returns
@@ -125,19 +141,23 @@ while True:
     # print (len(serial_data))
      
     print ("Cleaning data...")
-    clean_data =  clean_serial_data(serial_data)
-         
-    print ("Saving to csv...")
-    np.savetxt('arduinoData.csv', clean_data, delimiter= ",", fmt='%s') # .csv is a dataframe
+    clean_data = clean_serial_data(serial_data)
 
-    with open('arduinoData.csv', 'rb') as d:
-        data = np.load(d)
-    heightCol = data['Z']
-    print(heightCol)
+    print("getting z value...")
+    zVals = get_z_values(clean_data)
+    print("zVals are: \n", zVals)
 
-    # df = pd.read_csv('filename')
-    # df.to_csv('filename.csv')
+    # print ("Saving to csv...")
+    # np.savetxt('arduinoData.npy', clean_data, delimiter= ",", fmt='%s') # .csv is a dataframe
 
+    # print("saving zVals to .txt...")
+    np.savetxt("zVals.txt", zVals, delimiter= ",", fmt="%.2f")
 
-    print ("Plotting data...")
+    # with open('arduinoData.npy', 'wb') as d:
+    #     pickle.dump(len(d),)
+    #     data = np.load(d)
+    # heightCol = data['Z']
+    # print(heightCol)
+
+    # print ("Plotting data...")
 
