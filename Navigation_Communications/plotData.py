@@ -4,6 +4,7 @@ import re
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
+import datetime
 import pandas as pd
 import numpy as np
 from io import StringIO
@@ -13,30 +14,25 @@ import pickle
  
 portPath = "/dev/tty.usbmodem1411"       # Must match value shown on Arduino IDE
 baud = 9600                     # Must match Arduino baud rate
-timeout = 5                       # Seconds
+timeout = 5                      # Seconds
 filename = "data.csv"
-max_num_readings = 10
+max_num_readings = 17
 num_signals = 1
 
 
 fig = plt.figure()
 ax1 = fig.add_subplot(1,1,1)
 
-def animate(i):
-    pullData = open("zVals.txt","r").read()
-    dataArray = pullData.split('\n')
-    xar = []
-    yar = []
-    for eachLine in dataArray:
-        if len(eachLine)>1:
-            x = eachLine[0]
-            y = eachLine[1]
-            xar.append((x))
-            yar.append((y))
+clean_data = []
+xar = []
+yar = []
 
+global iar #index array NOTE: put times?
+global zar #zval array 
+index = 0
+zar = []
+iar = []
 
-ani = animation.FuncAnimation(fig, animate, interval=1000)
-plt.show() 
  
 def create_serial_obj(portPath, baud_rate, tout):
     """
@@ -85,22 +81,25 @@ def clean_serial_data(data):
     Given something like: ['0.5000,33\r\n', '1.0000,283\r\n']
     Returns: [[0.5,33.0], [1.0,283.0]]
     """
-    clean_data = []
     
     for line in data:
-        print('line is \n',line)
-        print("length of line is \n", len(line))
+        # print('line is \n',line)
+        # print("length of line is \n", len(line))
         line_data = re.findall(r"[-+]?\d*\.\d+|\d+", line.decode('ascii')) # finds all floating point nums and digits
-        print("length of line_data is \n", len(line_data))
+        # print("length of line_data is \n", len(line_data))
         line_data = list(map(float, line_data)) # Convert strings to float
-        print('line_data is %s\n' % (line_data))
+        # print('line_data is %s\n' % (line_data))
 
+        global index
 
         if len(line_data) > 0:
             clean_data.append(line_data)
-            
-    print("clean_data is \n", clean_data)
-    print("clean_data[0] is \n", clean_data[0])
+            if len(line_data) == 7:
+                iar.append(index)
+                zar.append(line_data[2]) 
+                index += 1      
+    # print("clean_data is \n", clean_data)
+    # print("clean_data[0] is \n", clean_data[0])
 
     return clean_data           
  
@@ -112,7 +111,7 @@ def get_z_values(clean_data):
             zVals[i][0] = i + 1 # ith row 0th num is time step
             zVals[i][1] = row[2] # ith row 1st num is zVal
             i += 1
-            print(zVals[i])
+            # print(zVals[i])
     return zVals
     
 # def gen_col_list(num_signals):
@@ -135,29 +134,39 @@ def get_z_values(clean_data):
 print ("Creating serial object...")
 serial_obj = create_serial_obj(portPath, baud, timeout)
  
-while True:
-    print ("Reading serial data...")
+# while True:
+#     print ("Reading serial data...")
+#     serial_data = read_serial_data(serial_obj)
+#     # print (len(serial_data))
+    
+#     print ("Cleaning data...")
+#     clean_data = clean_serial_data(serial_data)
+
+#     print("getting z value...")
+#     zVals = get_z_values(clean_data)
+#     print("zVals are: \n", zVals)
+
+  
+def animate(i):
+    # pullData = open("zVals.txt","r").read()
     serial_data = read_serial_data(serial_obj)
-    # print (len(serial_data))
-     
-    print ("Cleaning data...")
     clean_data = clean_serial_data(serial_data)
+    # zVals = get_z_values(clean_data)
 
-    print("getting z value...")
-    zVals = get_z_values(clean_data)
-    print("zVals are: \n", zVals)
+    # dataArray = pullData.split('\n')
 
-    # print ("Saving to csv...")
-    # np.savetxt('arduinoData.npy', clean_data, delimiter= ",", fmt='%s') # .csv is a dataframe
+    # for eachLine in dataArray:
+    #     if len(eachLine)>1:
+    #         x = eachLine[0]
+    #         y = eachLine[1]
+    #         xar.append((x))
+    #         yar.append((y))
+    ax1.clear()
+    # ax1.plot(xar, yar)
+    ax1.plot(iar, zar)
 
-    # print("saving zVals to .txt...")
-    np.savetxt("zVals.txt", zVals, delimiter= ",", fmt="%.2f")
 
-    # with open('arduinoData.npy', 'wb') as d:
-    #     pickle.dump(len(d),)
-    #     data = np.load(d)
-    # heightCol = data['Z']
-    # print(heightCol)
 
-    # print ("Plotting data...")
+ani = animation.FuncAnimation(fig, animate, interval=1000)
+plt.show()   
 
