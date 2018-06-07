@@ -32,31 +32,26 @@ void transitionA()
   a = digitalRead(A);
   b = digitalRead(B);
   if(!b) { //b = 0
-    if(!a) {//a = 0 (old a = 1)
+    if(!a) { //a = 0 (old a = 1)
       count--;
       dir = -1;
-    }else {//a=1 (old a = 0)
+    }else { //a=1 (old a = 0)
       count++;
       dir = 1;
     }
   }else { //b=1
-    if(!a) {//a = 0 
+    if(!a) { //a = 0 
       count++;
       dir = 1;
-    } else {//a = 1
+    } else { //a = 1
       count--;
       dir = -1;
     }
   }
-  
-  velocity = (double) dir * 750000/(t - tOld); //velocity should update independent of signal changes
 }
-
-void velocity(
-
 //Interrupt service routine for encoder signal B
 //Increments or decrements count
-//Updates speed
+
 void transitionB()
 {
   t = micros();
@@ -80,6 +75,12 @@ void transitionB()
   }
 }
 
+void calcRPM() //calculates RPM with count change over time change. time change is constant so we only need to update update countOld = count for varying RPMs
+{
+  rpm = (double) dir * (count - countOld) / T; //Need to find correct multiplication factor still. This calculation puts out counts/micros
+  countOld = count;
+}
+
 //Resets count and velocity variables, measures t, a, and b
 void resetEncoder()
 {
@@ -89,13 +90,6 @@ void resetEncoder()
   t = micros();
   a = digitalRead(A);
   b = digitalRead(B);
-}
-void calcRPM()//calculates RPM with count change over time change. time change is constant so we only need to update update countOld = count for varying RPMs
-{
-
-  rpm = (double) dir * (count - countOld) / T; //Need to find correct multiplication factor still. This calculation puts out counts/micros I believe
-  countOld = count;
-
 }
 
 void setup()
@@ -117,6 +111,8 @@ void setup()
   resetEncoder();
   //digitalWrite(DIR1, 1);
   //digitalWrite(PWM1, 1);
+  countOld = 0;
+  //set countOld so the first RPM calculation works
 }
 
 void loop()
