@@ -19,8 +19,7 @@ volatile int b;  //state of encoder signal B
 volatile long int count;  //Angular Position in encoder counts
 volatile long int countOld;  //Previous count (for calculating speed)
 volatile long int t;  //Time of measurement (for calculating speed) //ask hasith about overflow problem with time, how to optimize
-volatile int tOld; //Time of previous measurement (for calculating speed)
-volatile double velocity; // Angular velocity in counts/s
+volatile double rpm; // rotations per minute
 int dir;
 
 //Interrupt service routine for encoder signal A
