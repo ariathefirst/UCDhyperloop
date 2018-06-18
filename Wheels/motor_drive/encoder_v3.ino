@@ -5,8 +5,8 @@
  */
 
 #include <TimerOne.h>
-#define CN 80 //Number of counts per revolution on the encoder
-#define T 500000 //Velocity calculation time interval
+#define CN 80.00 //Number of counts per revolution on the encoder.MAKE SURE IT HAS ENOUGH DIGITS
+#define T 0.500 //Velocity calculation time interval in seconds
 #define A 5 //Encoder A = Pin 5 PB0
 #define B 3 //Encoder B = Pin 3 PB1
 #define DIR1 6 //Direction 1 PE5
@@ -21,6 +21,7 @@ volatile long int countOld;  //Previous count (for calculating speed)
 volatile long int t;  //Time of measurement (for calculating speed) //ask hasith about overflow problem with time, how to optimize
 volatile double rpm; // rotations per minute
 int dir;
+const double RPMfactor = 60.00 / (CN * T);
 
 //Interrupt service routine for encoder signal A
 //Increments or decrements count
@@ -33,18 +34,14 @@ void transitionA()
   if(!b) { //b = 0
     if(!a) { //a = 0 (old a = 1)
       count--;
-      dir = -1;
     }else { //a=1 (old a = 0)
       count++;
-      dir = 1;
     }
   }else { //b=1
     if(!a) { //a = 0 
       count++;
-      dir = 1;
     } else { //a = 1
       count--;
-      dir = -1;
     }
   }
 }
@@ -59,24 +56,21 @@ void transitionB()
   if(!a) { //a = 0
     if(!b) {//b = 0
       count++;
-      dir = 1;
     }else {//b = 1
       count--;
-      dir = -1;
     }
   } else { //a = 1
     if(!b) {//b = 0
       count--;
-      dir = -1;
     }else {//b = 1
       count++;
-      dir = 1;
+    }
   }
 }
 
 void calcRPM() //calculates RPM with count change over time change. time change is constant so we only need to update update countOld = count for varying RPMs
 {
-  rpm = (double) dir * (count - countOld) / T; //Need to find correct multiplication factor still. This calculation puts out counts/micros
+  rpm = (double) RPMfactor * (count - countOld);
   countOld = count;
 }
 
@@ -85,7 +79,7 @@ void resetEncoder()
 {
   count = 0;
   countOld = 0;
-  velocity = 0;
+  rpm = 0;
   t = micros();
   a = digitalRead(A);
   b = digitalRead(B);
@@ -104,14 +98,12 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(5), transitionA, CHANGE);
   attachInterrupt(digitalPinToInterrupt(3), transitionB, CHANGE);
   //Set timer interrupt service routines to calculate velocity at certain time intervals
-  Timer1.initialize(T);
+  Timer1.initialize(T*1000000);
   Timer1.attachInterrupt(calcRPM);
   //Reset encoder measurements
   resetEncoder();
   //digitalWrite(DIR1, 1);
   //digitalWrite(PWM1, 1);
-  countOld = 0;
-  //set countOld so the first RPM calculation works
 }
 
 void loop()
@@ -122,9 +114,11 @@ void loop()
   Serial.print(t);
   Serial.print("\tPOSITION: ");
   Serial.print(count);
+  Serial.print("\t");
+  Serial.print(RPMfactor);
   Serial.print("\tRPM: ");
   Serial.println(rpm, 4);
-  delay(1000);
+  //delay(1000);
   t = micros();
   
   //Serial.print("A: ");
