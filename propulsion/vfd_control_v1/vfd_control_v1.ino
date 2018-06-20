@@ -1,6 +1,6 @@
 
 #include <TimerOne.h>
-#define CN 2400.00 //Number of counts per revolution on the encoder.MAKE SURE IT HAS ENOUGH DIGITS
+#define CN 1200.00 //Number of counts per revolution on the encoder.MAKE SURE IT HAS ENOUGH DIGITS
 #define T 0.500 //Velocity calculation time interval in seconds
 #define A 5 //Encoder A = Pin 5 PB0
 #define B 3 //Encoder B = Pin 3 PB1
@@ -182,6 +182,9 @@ void setup()
   pinMode(S1,OUTPUT);
   
   digitalWrite(S1,LOW);
+  //creates pullup resistors
+  digitalWrite(A,HIGH);
+  digitalWrite(B,HIGH);
   
   //Begin serial monitor
   Serial.begin(9600);
