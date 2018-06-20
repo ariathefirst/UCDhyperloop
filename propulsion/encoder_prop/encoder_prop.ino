@@ -5,7 +5,7 @@
  */
 
 #include <TimerOne.h>
-#define CN 2400.00 //Number of counts per revolution on the encoder.MAKE SURE IT HAS ENOUGH DIGITS
+#define CN 1200.00 //Number of counts per revolution on the encoder. datasheet uses 2400 but that gave us half of expected value..MAKE SURE IT HAS ENOUGH DIGITS
 #define T 0.500 //Velocity calculation time interval in seconds
 #define A 5 //Encoder A = Pin 5 PB0
 #define B 3 //Encoder B = Pin 3 PB1
@@ -95,7 +95,8 @@ void setup()
   //Set encoder pins as inputs
   pinMode(A, INPUT);
   pinMode(B, INPUT);
-  
+  digitalWrite(A,HIGH);
+  digitalWrite(B,HIGH);
 
   
   //Begin serial monitor
@@ -118,6 +119,7 @@ void loop()
 {
   lin_speed = rpm*PI*gear_C/6000.0; // linear speed. divide by 60s*100cm to get get meters/sec
   distance = GR_BA*(PI*gear_C)*(count/CN)/100.00; // distaance travelled from start point. divide by 100 to get meters
+  //distance = (PI*gear_A)*(count/CN); used to test accuracy. uses just gear_A, 1 rev = 10.3 cm
   Serial.print("\tPOSITION: ");
   Serial.print(count);
   Serial.print("\t");
