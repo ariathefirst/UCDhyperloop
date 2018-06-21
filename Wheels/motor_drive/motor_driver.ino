@@ -142,6 +142,10 @@ void loop()
   //write PWM value to PWM1 output pin
   analogWrite(PWM1, abs(pwmWrite));
   
+  //distance and velocity calculations
+  distance = (2*PI*RAD)*(count/CN)/100.00;
+  velocity = (2*PI*RAD)*rpm/6000;
+  
   //print relevant parameters
   Serial.print("PWM: ");
   Serial.print(pwmWrite);
