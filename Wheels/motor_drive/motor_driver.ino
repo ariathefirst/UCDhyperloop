@@ -1,7 +1,7 @@
-/* motor_driver.ino
+/* tiva_encoder.ino
  * reads encoder position and speed
- * outputs data to serial monitor
- * takes PWM input and linearly changes to it
+ * outputs data to Serial monitor
+ * sends input PWM to motor
  * NOT OPTIMIZED - look for ways to improve performance
  */
 
@@ -24,7 +24,7 @@ volatile int b;  //state of encoder signal B
 volatile long int count;  //angular Position in encoder counts
 volatile long int countOld;  //previous count (for calculating speed)
 volatile double rpm; //rotations per minute
-const double rpmFactor = 60 / (CN * T); //part of RPM calculation
+const double RPMfactor = 60 / (CN * T); //part of RPM calculation
 double distance; //distance traveled in meters
 double velocity; //velocity in meters/sec
 int pwmIn = 0; //PWM input value
@@ -51,7 +51,7 @@ void transitionB()
 
 //calculates RPM with count change over constant time change
 void calcRPM() {
-  rpm = (double) rpmFactor * (count - countOld);
+  rpm = (double) RPMfactor * (count - countOld);
   countOld = count;
 }
 
@@ -121,12 +121,15 @@ void loop()
   //take PWM input
   if(Serial.available() > 0) {
      pwmOld = pwmWrite;
-     pwmIn = constrain(Serial.parseFloat(), -254, 254); //255 is bugged and won't run the motor at max speed
+     pwmIn = Serial.parseFloat();
+     pwmIn = constrain(pwmIn, -254, 254); //255 and -255 wouldn't run at full speed for some reason
   }
+
   
   //linear PWM change to input PWM value
   pwmWrite = changePWM(pwmWrite, pwmOld, pwmIn, CT);
- 
+  pwmWrite = constrain(pwmWrite, -254, 254); //255 and -255 wouldn't run at full speed for some reason
+
   //set motor direction on DIR1 output pin
   if(pwmWrite > 0) {
     digitalWrite(DIR1, LOW);
@@ -136,8 +139,7 @@ void loop()
 
   //write PWM value to PWM1 output pin
   analogWrite(PWM1, abs(pwmWrite));
-  
-  //distance and velocity calculations
+
   distance = (2*PI*RAD)*(count/CN)/100.00;
   velocity = (2*PI*RAD)*rpm/6000;
   
