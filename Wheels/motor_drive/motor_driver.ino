@@ -24,7 +24,7 @@ volatile int b;  //state of encoder signal B
 volatile long int count;  //angular Position in encoder counts
 volatile long int countOld;  //previous count (for calculating speed)
 volatile double rpm; //rotations per minute
-const double RPMfactor = 60 / (CN * T); //part of RPM calculation
+const double rpmFactor = 60 / (CN * T); //part of RPM calculation
 double distance; //distance traveled in meters
 double velocity; //velocity in meters/sec
 int pwmIn = 0; //PWM input value
@@ -51,7 +51,7 @@ void transitionB()
 
 //calculates RPM with count change over constant time change
 void calcRPM() {
-  rpm = (double) RPMfactor * (count - countOld);
+  rpm = (double) rpmFactor * (count - countOld);
   countOld = count;
 }
 
