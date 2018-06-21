@@ -1,6 +1,7 @@
-/* tiva_encoder.ino
+/* motor_driver.ino
  * reads encoder position and speed
- * outputs data to Serial monitor
+ * outputs data to serial monitor
+ * takes PWM input and linearly changes to it
  * NOT OPTIMIZED - look for ways to improve performance
  */
 
