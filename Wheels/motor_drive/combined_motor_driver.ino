@@ -141,7 +141,7 @@ void loop()
   //write PWM value to PWM1 output pin
   analogWrite(PWM1, abs(pwmWrite));
   
-  //print encoder count and velocity
+  //print relevant parameters
   Serial.print("PWM: ");
   Serial.print(pwmWrite);
   Serial.print("\tCOUNT: ");
