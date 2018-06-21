@@ -121,12 +121,7 @@ void loop()
   //take PWM input
   if(Serial.available() > 0) {
      pwmOld = pwmWrite;
-     pwmIn = Serial.parseFloat();
-     if(pwmIn > 254) { //255 and -255 wouldn't run at full speed for some reason
-          pwmIn = 254;
-     } else if(pwmIn < -254) {
-          pwmIn = -254;
-     }
+     pwmIn = constrain(Serial.parseFloat(), -254, 254); //255 is bugged and won't run the motor at max speed
   }
   
   //linear PWM change to input PWM value
