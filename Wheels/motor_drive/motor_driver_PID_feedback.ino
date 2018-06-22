@@ -1,3 +1,4 @@
+
 /* motor_driver_PID.ino
  * reads encoder position and speed
  * outputs data to serial monitor
@@ -18,10 +19,12 @@
 #define PWM1 6 //PWM 1: pin 6
 #define RAD 10.16 //radius of wheel in cm
 #define VIT 100 //time change interval between new target velocity (no units)
-#define ESM 100 //max error sum for PID calculation
-#define Kp 5 //proportional gain factor for PID feedback
+
+#define ESM 240 //max error sum for PID calculation (varies with Ki factor)
+//PID constants. NEED TO BE TUNED MORE PRECISELY.
+#define Kp 5  //proportional gain factor for PID feedback
 #define Ki 1 //integral gain factor for PID feedback
-#define Kd 0 //derivative gain factor for PID feedback
+#define Kd -1 //derivative gain factor for PID feedback //not sure why negative worked better
 
 //initialize global variables
 //volatile variables can be changed inside interrupts
@@ -108,10 +111,13 @@ float pidCalculate(float *errorSum, float velocityTarget, float velocityOut, flo
   error = velocityTarget - velocityOut;
   *errorSum = *errorSum + error;
   if(*errorSum > ESM || *errorSum < -ESM){
-    Serial.println("ERROR MAX PWM");
+    Serial.print("MAX ERROR SUM");
   }
   *errorSum = constrain(*errorSum, -ESM, ESM);
   pwmOut = (Kp * error) + (Ki * *errorSum) + (Kd * (error - *errorOld));
+  if(velocityTarget == 0) {
+    pwmOut = 0;
+  }
   *errorOld = error;
   return pwmOut;
 }
@@ -157,6 +163,7 @@ void loop()
   if(velocityIn != velocityTarget) {
     velocityTarget = changeVelocity(velocityTarget, velocityOld, velocityIn, VIT);
   }
+  //velocityTarget = velocityIn;
   
   pwmWrite = pidCalculate(&errorSum, velocityTarget, velocityOut, &errorOld);
   pwmWrite = constrain(pwmWrite, -254, 254); //255 and -255 are bugged and won't run the motor at max speed
@@ -172,15 +179,14 @@ void loop()
   analogWrite(PWM1, abs(pwmWrite));
 
   distance = (2*PI*RAD)*(count/CPR)/100.00;
-  velocityOut = (2*PI*RAD)*rpm/6000;
   
   //print relevant parameters
-  Serial.print("PWM: ");
+  Serial.print("\tPWM: ");
   Serial.print(pwmWrite);
   //Serial.print("\tCOUNT: ");
   //Serial.print(count);
-  //Serial.print("\tDISTANCE: ");
-  //Serial.print(distance);
+  Serial.print("\tDISTANCE: ");
+  Serial.print(distance);
   //Serial.print("\tRPM: ");
   //Serial.print(rpm, 4);
   Serial.print("\tTARGET VELOCITY: ");
