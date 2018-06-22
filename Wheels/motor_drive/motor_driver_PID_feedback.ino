@@ -1,23 +1,23 @@
-
 /* motor_driver_PID.ino
  * reads encoder position and speed
  * outputs data to serial monitor
- * takes velocity input and linearly changes to it
+ * takes velocity input and changes to it linearly
  * NOT OPTIMIZED - look for ways to improve performance
  */
 
 #include <TimerOne.h>
 #include <time.h>
 
-#define CPR 40.00 //counts per revolution on the encoder
-//used to be 80, but answers were halved
-//needs to have to digits past decimal to prevent rounding error
-#define VCT 0.1 //velocity calculation time interval in seconds
 #define A 5 //encoder A: pin 5
 #define B 3 //encoder B: pin 3
 #define DIR1 4 //direction 1: pin 4
 #define PWM1 6 //PWM 1: pin 6
+
+#define CPR 40.00 //counts per revolution on the encoder
+//used to be 80, but answers were halved
+//needs to have to digits past decimal to prevent rounding error
 #define RAD 10.16 //radius of wheel in cm
+#define VCT 0.1 //velocity calculation time interval in seconds
 #define VIT 100 //time change interval between new target velocity (no units)
 
 #define ESM 240 //max error sum for PID calculation (varies with Ki factor)
@@ -103,7 +103,7 @@ float changeVelocity(float vCurrent, int vBegin, int vEnd, float t)
   return vNext;
 }
 
-float pidCalculate(float *errorSum, float velocityTarget, float velocityOut, float *errorOld) //rough draft
+float pidCalculate(float *errorSum, float velocityTarget, float velocityOut, float *errorOld) //feedback loop for inputing v instead of PWM
 {
   float error;
   float pwmOut;
@@ -111,11 +111,11 @@ float pidCalculate(float *errorSum, float velocityTarget, float velocityOut, flo
   error = velocityTarget - velocityOut;
   *errorSum = *errorSum + error;
   if(*errorSum > ESM || *errorSum < -ESM){
-    Serial.print("MAX ERROR SUM");
+    Serial.print("MAX ERROR SUM\t");
   }
   *errorSum = constrain(*errorSum, -ESM, ESM);
   pwmOut = (Kp * error) + (Ki * *errorSum) + (Kd * (error - *errorOld));
-  if(velocityTarget == 0) {
+  if(velocityOut == 0) {
     pwmOut = 0;
   }
   *errorOld = error;
@@ -181,7 +181,7 @@ void loop()
   distance = (2*PI*RAD)*(count/CPR)/100.00;
   
   //print relevant parameters
-  Serial.print("\tPWM: ");
+  Serial.print("PWM: ");
   Serial.print(pwmWrite);
   //Serial.print("\tCOUNT: ");
   //Serial.print(count);
@@ -193,5 +193,4 @@ void loop()
   Serial.print(velocityTarget);
   Serial.print("\tVELOCITY OUT: ");
   Serial.println(velocityOut);
-  //Serial.println(velocityTarget - velocityOut);
 }
