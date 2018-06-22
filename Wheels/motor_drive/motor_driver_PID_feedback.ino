@@ -115,7 +115,7 @@ float pidCalculate(float *errorSum, float velocityTarget, float velocityOut, flo
   }
   *errorSum = constrain(*errorSum, -ESM, ESM);
   pwmOut = (Kp * error) + (Ki * *errorSum) + (Kd * (error - *errorOld));
-  if(velocityOut == 0) {
+  if(velocityTarget == 0) {
     pwmOut = 0;
   }
   *errorOld = error;
