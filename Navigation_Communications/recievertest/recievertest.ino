@@ -2,7 +2,16 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include <CAN.h>
-
+void receiver(){
+   char x[8];
+   int i = 0;
+   while (CAN.available()) {
+      x[i] = (char)CAN.read();
+      i++;
+   }
+   Serial.println(x);
+  
+  }
 void setup() {
   Serial.begin(9600);
   while (!Serial);
@@ -14,55 +23,12 @@ void setup() {
     Serial.println("Starting CAN failed!");
     while (1);
   }
+  CAN.onReceive(receiver);
+  CAN.filter(0x11);
 }
-void canEncoder(int data){
-  int c = data / 255;
-  CAN.beginPacket(0x12);
-  CAN.write(data);
-  CAN.write(c);
-  CAN.endPacket();
-  }
 
-int canDecoder(int c, int data){
-  int val = c*255 + data;
-  return val;
-}
 
 void loop() {
-  // try to parse packet
-  int packetSize = CAN.parsePacket();
 
-  if (packetSize) {
-    // received a packet
-    Serial.print("Received ");
-
-    if (CAN.packetExtended()) {
-      Serial.print("extended ");
-    }
-
-    if (CAN.packetRtr()) {
-      // Remote transmission request, packet contains no data
-      Serial.print("RTR ");
-    }
-
-    Serial.print("packet with id 0x");
-    Serial.print(CAN.packetId(), HEX);
-
-    if (CAN.packetRtr()) {
-      Serial.print(" and requested length ");
-      Serial.println(CAN.packetDlc());
-    } else {
-      Serial.print(" and length ");
-      Serial.println(packetSize);
-
-      // only print packet data for non-RTR packets
-      while (CAN.available()) {
-        Serial.print((char)CAN.read());
-      }
-      Serial.println();
-    }
-
-    Serial.println();
-  }
 }
 
