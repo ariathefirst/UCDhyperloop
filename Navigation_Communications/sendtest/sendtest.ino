@@ -16,7 +16,7 @@ void setup() {
 }
 void canEncoder(int data){
   int c = data / 255;
-  CAN.beginPacket(0x12);
+  CAN.beginPacket(0x11);
   CAN.write(data);
   CAN.write(c);
   CAN.endPacket();
@@ -26,16 +26,30 @@ int canDecoder(int c, int data){
   int val = c*255 + data;
   return val;
 }
+
+struct message{
+  int value;
+  int Time;
+  }message;
+
+void sendValue(int id, float data){
+  char x[8];
+  dtostrf(data,8,3,x);
+  CAN.beginPacket(id);
+  CAN.write(x,8);
+  CAN.endPacket(); 
+  Serial.print(x); 
+  }
+float recieveValue(){
+    
+  }
   
 void loop() {
   // send packet: id is 11 bits, packet can contain up to 8 bytes of data
-  Serial.print("Sending packet ... ");
+  Serial.print("Sending packet1 ... ");
+  sendValue(0x11,345.5);
+  Serial.println("done");delay(500);
 
-  canEncoder(500);
-
-  Serial.println("done");
-
-  delay(1000);
 
 }
 
