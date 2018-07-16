@@ -5,11 +5,15 @@
 void receiver(){
    char x[8];
    int i = 0;
+   Serial.print("packet with id 0x");
+   Serial.print(CAN.packetId(), HEX);
+   Serial.print(" ");
    while (CAN.available()) {
-      x[i] = (char)CAN.read();
-      i++;
+      for(i=0;i<=7;i++){x[i]  =(char)CAN.read();}
    }
-   Serial.println(x);
+   Serial.println(atof(x));
+   
+  
   
   }
 void setup() {
