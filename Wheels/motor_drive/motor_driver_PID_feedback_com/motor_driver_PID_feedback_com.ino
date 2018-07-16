@@ -125,16 +125,33 @@ float pidCalculate(float *errorSum, float velocityTarget, float velocityOut, flo
 void receiver(){
    char x[8];
    int i = 0;
-   Serial.print("packet with id 0x");
-   Serial.print(CAN.packetId(), HEX);
-   Serial.print(" ");
-   while (CAN.available()) {
-      for(i=0;i<=7;i++){x[i]  =(char)CAN.read();}
-   }
-   velocityOld = velocityTarget;
-   velocityIn = atof(x);
+   int packetSize = CAN.parsePacket();
+   if(packetSize){
+      Serial.print("packet with id 0x");
+      Serial.print(CAN.packetId(), HEX);
+      Serial.print(" ");
+      while (CAN.available()) {       
+        for(i=0;i<=7;i++){
+          x[i]  =(char)CAN.read();
+          Serial.print(i);
+          
+        }
+      }
+      velocityOld = velocityTarget;
+      velocityIn = atoi(x);
+     
+   }else{Serial.print("no packet\t");}
    
 }
+void sender(){
+  char x[8];
+  CAN.beginPacket(0x21);
+  CAN.write(dtostrf(distance,8,3,x),8);
+  CAN.endPacket();
+  CAN.beginPacket(0x22);
+  CAN.write(dtostrf(velocityOut,8,3,x),8);
+  CAN.endPacket();
+  }
 void setup()
 {
   //set encoder pins as inputs
@@ -160,11 +177,23 @@ void setup()
   
   //reset encoder measurements
   resetEncoder();
-  CAN.onReceive(receiver);
+  
+  if (!CAN.begin(250E3)) {
+    Serial.println("Starting CAN failed!");
+    while (1);
+   
+  }else{Serial.print("CAN ok");}
+
+  //only recieve specifc CAN id
+  CAN.filter(0x20);
+
 }
 
 void loop()
 {
+ sender();
+ receiver();
+
   
   //linear velocity change to input velocity value
   if(velocityIn != velocityTarget) {
@@ -188,16 +217,17 @@ void loop()
   distance = (2*PI*RAD)*(count/CPR)/100.00;
   
   //print relevant parameters
-  Serial.print("PWM: ");
-  Serial.print(pwmWrite);
+  //Serial.print("PWM: ");
+  //Serial.print(velocityIn);
   //Serial.print("\tCOUNT: ");
   //Serial.print(count);
   Serial.print("\tDISTANCE: ");
   Serial.print(distance);
   //Serial.print("\tRPM: ");
   //Serial.print(rpm, 4);
-  Serial.print("\tTARGET VELOCITY: ");
-  Serial.print(velocityTarget);
+  //Serial.print("\tTARGET VELOCITY: ");
+  //Serial.print(velocityTarget);
   Serial.print("\tVELOCITY OUT: ");
   Serial.println(velocityOut);
+  
 }
