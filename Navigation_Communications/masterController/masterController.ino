@@ -7,6 +7,7 @@ float dist_p =0;  //propulsion distance
 float dist_w =0;  //propulsion distance
 float vel_p=0;  //propulsion distance
 float vel_w=0;  //propulsion distance
+char pnmatic_states[4];
 
 int cmd;
 
@@ -59,6 +60,10 @@ void recieveValue(){
       //if(id == 0x22){vel_w = atof(x);}
       if(id == 0x32){vel_p = atof(x);}
       if(id == 0x33){dist_p = atof(x);}
+      if(id == 0x41){pnmatic_states[0] = x[0];} // FB LS A
+      if(id == 0x42){pnmatic_states[1] = x[0];} // FB LS B
+      if(id == 0x43){pnmatic_states[2] = x[0];} // EB LS A
+      if(id == 0x44){pnmatic_states[3] = x[0];} // EB LS B
       }else{}  
    }
 }
@@ -90,22 +95,22 @@ void loop() {
         sendValue(0x31, Serial.parseFloat());
         break;
       case 412:
-        CAN.beginPacket(0x01);
+        CAN.beginPacket(0x40);
         CAN.write('c');
         CAN.endPacket();
         break;
       case 413:
-        CAN.beginPacket(0x04);
+        CAN.beginPacket(0x40);
         CAN.write('d');
         CAN.endPacket();
         break;
       case 411:
-        CAN.beginPacket(0x04);
+        CAN.beginPacket(0x40);
         CAN.write('a');
         CAN.endPacket();
         break;
       case 410:
-        CAN.beginPacket(0x04);
+        CAN.beginPacket(0x40);
         CAN.write('b');
         CAN.endPacket();
         break;
@@ -119,11 +124,14 @@ void loop() {
 //    Serial.println(data);
    }
      
-   
-   Serial.print("\tvelw:");
-   Serial.print(vel_w);
-   Serial.print("\tdistw:");
-   Serial.print(dist_w);
+  Serial.print("FB A B ");
+  Serial.print(pnmatic_states[0]);Serial.print(pnmatic_states[1]);
+  Serial.print(" EB AB"); 
+  Serial.print(pnmatic_states[2]);Serial.print(pnmatic_states[3]);
+  // Serial.print("\tvelw:");
+  // Serial.print(vel_w);
+  // Serial.print("\tdistw:");
+  // Serial.print(dist_w);
    Serial.print("\tvelp:");
    Serial.print(vel_p);
    Serial.print("\tdistp:");
