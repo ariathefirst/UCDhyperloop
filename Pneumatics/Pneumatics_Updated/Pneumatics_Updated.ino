@@ -4,7 +4,7 @@ Controls the actuation of the pneumatics
 Currently controlled by Serial commands
 Will be updated to be controlled by CAN bus
 */
-
+#include <CAN.h>
 // map pins
 #define FA 2 // Friction Brake A
 #define FB 3 // Friction Brake B
@@ -20,6 +20,39 @@ Will be updated to be controlled by CAN bus
 #define FA_OFF '1'
 
 char cmd;
+/*void sender(){
+  char x[8];
+  CAN.beginPacket(0x32);
+  CAN.write(dtostrf(distance,8,3,x),8);
+  CAN.endPacket();
+  CAN.beginPacket(0x33);
+  CAN.write(dtostrf(lin_speed,8,3,x),8);
+  CAN.endPacket();
+  }
+  */
+
+// recieve commands from canbus, recieve on/off and input frequency
+char frcBrake;
+char ecBrake;
+void reciever(){
+   char x[1];
+   int i = 0;
+   int packetSize = CAN.parsePacket();
+   if(packetSize){
+      while (CAN.available()) {       
+        for(i=0;i<=0;i++){
+          x[i]  =(char)CAN.read();
+          Serial.flush();
+          
+        }
+      }
+     if(CAN.packetId() == 0x41){cmd = x[0];} // if pkt ID for frequency, send input frequency to VFD
+     //if(CAN.packetId() == 0x40){ecBrake = x[0];}  // if pkt ID for VFD on/off, only take first element of the message x[0]
+     
+   }else{}
+  
+  
+  }
 
 void setup()
 {
@@ -36,10 +69,16 @@ void setup()
   Serial.println("Input command:");
   Serial.println("0: Actuate Friction Brake A");
   Serial.println("1: Actuate Friction Brake B");
+  if (!CAN.begin(500E3)) {
+    Serial.println("Starting CAN failed!");
+    while (1);
+   
+  }
 }
 
 void loop()
 {
+  reciever();
   /*
   Serial.print("Limit Switch FA: ");
   Serial.println(digitalRead(SW_FA));
@@ -52,11 +91,7 @@ void loop()
   Serial.println("");
   */
   
-  if(Serial.available() > 0)
-  {
-    cmd = Serial.read();
-    Serial.print("CMD: ");
-    Serial.print(cmd);
+
     
     switch(cmd)
     {
@@ -103,10 +138,14 @@ void loop()
       default:
         Serial.println("Invalid Command");
     }
-    Serial.println("Input command:");
-    Serial.println("0: Actuate Friction Brake A");
-    Serial.println("1: Actuate Friction Brake B");
-  }
+    //Serial.println("Input command:");
+    //Serial.println("0: Actuate Friction Brake A");
+    //Serial.println("1: Actuate Friction Brake B");
   
+  Serial.print("Brake state:");
+  Serial.println(cmd);
+  //Serial.print("Eddy Current Brake state:");
+  //Serial.println(ecBrake);
   delay(1000);
+  
 }
