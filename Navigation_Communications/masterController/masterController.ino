@@ -19,12 +19,13 @@ void setup() {
  while(!CAN.begin(500E3)) {
    Serial.println("Starting CAN failed!");
   }
-  //CAN.onReceive(recieveValue);
+
 }
 
 
 
-
+// function to convert a float into a 8 byte string
+// and then send over can bus
 void sendValue(int id, float data){
 
  char y[8];
@@ -40,13 +41,17 @@ void sendValue(int id, float data){
  }
 
 
-
+//recieve packets from canbus and save them
 void recieveValue(){
    
    char x[8];
    int i = 0;
    int id;
-   for(i=0;i<3;i++){
+   unsigned long t = millis;
+// check for packets for 5 miliseconds 
+   while (millis - t < 5){
+      
+      // read the data from the can bus
       if(CAN.parsePacket()){
         id = CAN.packetId();
         while (CAN.available()) {       
@@ -55,16 +60,16 @@ void recieveValue(){
             Serial.flush();          
           }
         }
-                  
-      //if(id == 0x21){dist_w = atof(x);}
-      //if(id == 0x22){vel_w = atof(x);}
-      if(id == 0x32){vel_p = atof(x);}
-      if(id == 0x33){dist_p = atof(x);}
+      // sort the data recieved using their IDs            
+      if(id == 0x21){dist_w = atof(x);}
+      if(id == 0x22){vel_w = atof(x);}
+      if(id == 0x33){vel_p = atof(x);}
+      if(id == 0x32){dist_p = atof(x);}
       if(id == 0x41){pnmatic_states[0] = x[0];} // FB LS A
       if(id == 0x42){pnmatic_states[1] = x[0];} // FB LS B
       if(id == 0x43){pnmatic_states[2] = x[0];} // EB LS A
       if(id == 0x44){pnmatic_states[3] = x[0];} // EB LS B
-      }else{}  
+      }else{} 
    }
 }
 
@@ -73,28 +78,33 @@ void recieveValue(){
 
 void loop() {
 
- // send packet: id is 11 bits, packet can contain up to 8 bytes of data
+ 
 
   recieveValue();
 
   if(Serial.available()){
-
-    cmd = Serial.parseInt();
+    //the case structure to send commands and data to each system
+    cmd = Serial.parseInt(); // codes subject to change
+   
     switch(cmd){
-      case 300:
+      case 200: // send speed to wheels system
+        sendValue(0x20, Serial.parseFloat());
+        break;
+      case 300: // propulsion VFD on
         CAN.beginPacket(0x30);
         CAN.write('1');
         CAN.endPacket();
         break;
-      case 301:
+      case 301: // propulsion VFD off
         CAN.beginPacket(0x30);
         CAN.write('0');
         CAN.endPacket();
         break;
-      case 31:
+      case 31: // send frequency to propulsion
         sendValue(0x31, Serial.parseFloat());
         break;
-      case 412:
+      // eddy breaks and friction breaks
+      case 412:  
         CAN.beginPacket(0x40);
         CAN.write('c');
         CAN.endPacket();
@@ -120,18 +130,17 @@ void loop() {
         break; 
     }  
   
-//    Serial.print("Sending packet1 ... ");
-//    Serial.println(data);
+
    }
      
   Serial.print("FB A B ");
   Serial.print(pnmatic_states[0]);Serial.print(pnmatic_states[1]);
   Serial.print(" EB AB"); 
   Serial.print(pnmatic_states[2]);Serial.print(pnmatic_states[3]);
-  // Serial.print("\tvelw:");
-  // Serial.print(vel_w);
-  // Serial.print("\tdistw:");
-  // Serial.print(dist_w);
+  Serial.print("\tvelw:");
+  Serial.print(vel_w);
+  Serial.print("\tdistw:");
+  Serial.print(dist_w);
    Serial.print("\tvelp:");
    Serial.print(vel_p);
    Serial.print("\tdistp:");
