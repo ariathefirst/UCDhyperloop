@@ -16,20 +16,29 @@ Will be updated to be controlled by CAN bus
 #define SW_EB 9 // Eddy Current Brake Limit Switch B
 
 // encode commands
-#define FA_ON '0'
-#define FA_OFF '1'
 
+int FB_LSA=0;
+int FB_LSB=0;
+int ECB_LSA=0;
+int ECB_LSB=0;
 char cmd;
-/*void sender(){
-  char x[8];
-  CAN.beginPacket(0x32);
-  CAN.write(dtostrf(distance,8,3,x),8);
+  void sender(){
+  char x[2];
+  CAN.beginPacket(0x41);
+  CAN.write(FB_LSA + '0');
   CAN.endPacket();
-  CAN.beginPacket(0x33);
-  CAN.write(dtostrf(lin_speed,8,3,x),8);
+  CAN.beginPacket(0x42);
+  CAN.write(FB_LSB + '0');
   CAN.endPacket();
+  CAN.beginPacket(0x43);
+  CAN.write(ECB_LSA + '0');
+  CAN.endPacket();
+  CAN.beginPacket(0x44);
+  CAN.write(ECB_LSB + '0');
+  CAN.endPacket();
+  
   }
-  */
+  
 
 // recieve commands from canbus, recieve on/off and input frequency
 char frcBrake;
@@ -46,7 +55,7 @@ void reciever(){
           
         }
       }
-     if(CAN.packetId() == 0x41){cmd = x[0];} // if pkt ID for frequency, send input frequency to VFD
+     if(CAN.packetId() == 0x40){cmd = x[0];} // if pkt ID for frequency, send input frequency to VFD
      //if(CAN.packetId() == 0x40){ecBrake = x[0];}  // if pkt ID for VFD on/off, only take first element of the message x[0]
      
    }else{}
@@ -61,10 +70,10 @@ void setup()
   pinMode(FB, OUTPUT);
   pinMode(EA, OUTPUT);
   pinMode(EB, OUTPUT);
-  pinMode(SW_FA, INPUT_PULLUP);
-  pinMode(SW_FB, INPUT_PULLUP);
-  pinMode(SW_EA, INPUT_PULLUP);
-  pinMode(SW_EB, INPUT_PULLUP);
+  pinMode(SW_FA, INPUT);
+  pinMode(SW_FB, INPUT);
+  pinMode(SW_EA, INPUT);
+  pinMode(SW_EB, INPUT);
   Serial.begin(9600);
   Serial.println("Input command:");
   Serial.println("0: Actuate Friction Brake A");
@@ -79,17 +88,13 @@ void setup()
 void loop()
 {
   reciever();
-  /*
-  Serial.print("Limit Switch FA: ");
-  Serial.println(digitalRead(SW_FA));
-  Serial.print("Limit Switch FB: ");
-  Serial.println(digitalRead(SW_FB));
-  Serial.print("Limit Switch EA: ");
-  Serial.println(digitalRead(SW_EA));
-  Serial.print("Limit Switch EB: ");
-  Serial.println(digitalRead(SW_EB));
-  Serial.println("");
-  */
+  
+  FB_LSA=digitalRead(SW_FA);
+  FB_LSB=digitalRead(SW_FB);
+  ECB_LSA=digitalRead(SW_EA);
+  ECB_LSB=digitalRead(SW_EB);
+  sender();
+  
   
 
     
@@ -146,6 +151,14 @@ void loop()
   Serial.println(cmd);
   //Serial.print("Eddy Current Brake state:");
   //Serial.println(ecBrake);
-  delay(1000);
+    Serial.print("FB_A State:");
+  Serial.println(FB_LSA);
+    Serial.print("FB_B state:");
+  Serial.println(FB_LSB);
+    Serial.print("ECB_A state:");
+  Serial.println(ECB_LSA);
+    Serial.print("ECB_B state:");
+  Serial.println(ECB_LSB);
+  delay(10);
   
 }
