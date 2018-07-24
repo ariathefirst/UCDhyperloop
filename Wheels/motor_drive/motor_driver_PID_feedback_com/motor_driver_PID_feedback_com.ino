@@ -35,7 +35,7 @@ volatile long int count;  //angular Position in encoder counts
 volatile long int countOld;  //previous count (for calculating speed)
 volatile double rpm; //rotations per minute
 const double rpmFactor = 60 / (CPR * VCT); //part of RPM calculation
-double distance = 0; //distance traveled in meters
+float distance = 0; //distance traveled in meters
 float velocityIn = 0; //desired velocity input in meters/sec
 volatile float velocityOut; //velocity read in meters/sec
 float velocityTarget = 0; //what the veliocity should be (used for slow v transitions)
@@ -43,6 +43,13 @@ float velocityOld = 0; //previous value of velocityTarget
 float errorSum = 0;
 float errorOld = 0;
 float pwmWrite = 0; //PWM value sent to the motor
+
+union dataFrame{
+  float fl =0;
+  uint8_t bytes[8];
+  } dataFrame;
+
+
 
 //interrupt service routine for encoder signal A
 //increments or decrements count
@@ -143,6 +150,17 @@ void receiver(){
    }else{Serial.print("no packet\t");}
    
 }
+void sender2(){
+  union dataFrame dist;
+  dist.fl = distance;
+  union dataFrame vel;
+  vel.fl = velocityOut;
+  CAN.beginPacket(0x21);
+  CAN.write(dist.bytes,4);
+  CAN.write(vel.bytes,4);
+  CAN.endPacket();
+  
+  }
 void sender(){
   char x[8];
   CAN.beginPacket(0x21);
@@ -191,7 +209,7 @@ void setup()
 
 void loop()
 {
- sender();
+ sender2();
  receiver();
 
   
