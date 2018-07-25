@@ -22,18 +22,14 @@ int FB_LSB=0;
 int ECB_LSA=0;
 int ECB_LSB=0;
 char cmd;
-  void sender(){
-  char x[2];
+
+
+void sender(){
+
   CAN.beginPacket(0x41);
   CAN.write(FB_LSA + '0');
-  CAN.endPacket();
-  CAN.beginPacket(0x42);
   CAN.write(FB_LSB + '0');
-  CAN.endPacket();
-  CAN.beginPacket(0x43);
   CAN.write(ECB_LSA + '0');
-  CAN.endPacket();
-  CAN.beginPacket(0x44);
   CAN.write(ECB_LSB + '0');
   CAN.endPacket();
   
@@ -56,7 +52,7 @@ void reciever(){
         }
       }
      if(CAN.packetId() == 0x40){cmd = x[0];} // if pkt ID for frequency, send input frequency to VFD
-     //if(CAN.packetId() == 0x40){ecBrake = x[0];}  // if pkt ID for VFD on/off, only take first element of the message x[0]
+     
      
    }else{}
   
