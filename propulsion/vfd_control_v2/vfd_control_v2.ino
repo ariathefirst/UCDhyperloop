@@ -43,7 +43,10 @@ float freqVFD;
 int freqIn;
 int sh; // controls whether outputs are shown. not very important can remove
 
-
+union dataFrame{
+  float fl =0;
+  uint8_t bytes[8];
+  } dataFrame;
 
 
 
@@ -204,6 +207,18 @@ void reciever(){
   
   }
 
+void sender2(){
+  union dataFrame dist;
+  dist.fl = distance;
+  union dataFrame vel;
+  vel.fl = lin_speed;
+  CAN.beginPacket(0x32);
+  CAN.write(dist.bytes,4);
+  CAN.write(vel.bytes,4);
+  CAN.endPacket();
+  
+  }
+
 void setup()
 {
   //Set encoder pins as inputs
@@ -231,7 +246,7 @@ void setup()
   resetEncoder();
 
   freqVFD = readVFD();
-  if (!CAN.begin(250E3)) {
+  if (!CAN.begin(500E3)) {
     Serial.println("Starting CAN failed!");
     while (1);
    
