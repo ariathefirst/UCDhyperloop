@@ -212,7 +212,7 @@ void sender2(){
   dist.fl = distance;
   union dataFrame vel;
   vel.fl = lin_speed;
-  CAN.beginPacket(0x32);
+  CAN.beginPacket(0x23);
   CAN.write(dist.bytes,4);
   CAN.write(vel.bytes,4);
   CAN.endPacket();

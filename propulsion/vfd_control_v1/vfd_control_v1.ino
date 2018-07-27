@@ -155,7 +155,8 @@ void sendFreq(){
  int freq;
  Serial.print("Enter Frequency: ");
  while(!Serial.available()){ }
- freq = Serial.parseInt();      
+ freq = Serial.parseInt();
+ freq = constrain(freq,0,maxFreq);      
  tone(outputFreq,freq/maxFreq * mapFreq);
  Serial.print(freq);
  Serial.print(" ");
