@@ -76,7 +76,7 @@ void reciever(){
           for(i=0;i<4;i++){vel_p.bytes[i] = (byte) x[i+4];}
           for(i=0;i<4;i++){dist_p.bytes[i] = (byte) x[i];}
         }
-        if(id == 0x41){
+        if(id == 0x23){
           pnmatic_states[0] = x[0]; // FB LS A
           pnmatic_states[1] = x[1]; // FB LS B
           pnmatic_states[2] = x[2]; // EB LS A
@@ -152,22 +152,22 @@ reciever();
         break;
       // eddy breaks and friction breaks
       case 412:  
-        CAN.beginPacket(0x40);
+        CAN.beginPacket(0x10);
         CAN.write('c');
         CAN.endPacket();
         break;
       case 413:
-        CAN.beginPacket(0x40);
+        CAN.beginPacket(0x10);
         CAN.write('d');
         CAN.endPacket();
         break;
       case 411:
-        CAN.beginPacket(0x40);
+        CAN.beginPacket(0x10);
         CAN.write('a');
         CAN.endPacket();
         break;
       case 410:
-        CAN.beginPacket(0x40);
+        CAN.beginPacket(0x10);
         CAN.write('b');
         CAN.endPacket();
         break;
@@ -180,18 +180,18 @@ reciever();
 
    }
      
-//  Serial.print("FB A B ");
-//  Serial.print(pnmatic_states[0]);Serial.print(pnmatic_states[1]);
-//  Serial.print(" EB AB"); 
-//  Serial.print(pnmatic_states[2]);Serial.print(pnmatic_states[3]);
+  Serial.print("FB A B ");
+  Serial.print(pnmatic_states[0]);Serial.print(pnmatic_states[1]);
+  Serial.print(" EB AB"); 
+  Serial.print(pnmatic_states[2]);Serial.print(pnmatic_states[3]);
   Serial.print("\tvelw:");
   Serial.print(vel_w.fl);
   Serial.print("\tdistw:");
-  Serial.println(dist_w.fl);
-//   Serial.print("\tvelp:");
-//   Serial.print(vel_p.fl);
-//   Serial.print("\tdistp:");
-//   Serial.println(dist_p.fl);
+  Serial.print(dist_w.fl);
+   Serial.print("\tvelp:");
+   Serial.print(vel_p.fl);
+   Serial.print("\tdistp:");
+   Serial.println(dist_p.fl);
 
 
 

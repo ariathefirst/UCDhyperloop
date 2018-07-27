@@ -14,23 +14,7 @@ void setup() {
     Serial.println("Starting CAN failed!");
    }
 }
-void canEncoder(int data){
-  int c = data / 255;
-  CAN.beginPacket(0x11);
-  CAN.write(data);
-  CAN.write(c);
-  CAN.endPacket();
-  }
 
-int canDecoder(int c, int data){
-  int val = c*255 + data;
-  return val;
-}
-
-struct message{
-  int value;
-  int Time;
-  }message;
 
 void sendValue(int id, float data){
   char x[8];
