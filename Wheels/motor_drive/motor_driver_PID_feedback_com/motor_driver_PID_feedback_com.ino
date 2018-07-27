@@ -196,7 +196,7 @@ void setup()
   //reset encoder measurements
   resetEncoder();
   
-  if (!CAN.begin(250E3)) {
+  if (!CAN.begin(500E3)) {
     Serial.println("Starting CAN failed!");
     while (1);
    
