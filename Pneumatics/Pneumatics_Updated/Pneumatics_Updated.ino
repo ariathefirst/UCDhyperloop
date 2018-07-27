@@ -31,6 +31,10 @@ void sender(){
   CAN.write(FB_LSB + '0');
   CAN.write(ECB_LSA + '0');
   CAN.write(ECB_LSB + '0');
+  CAN.write('0');
+  CAN.write('0');
+  CAN.write('0');
+  CAN.write('0');
   CAN.endPacket();
   
   }
