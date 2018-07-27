@@ -47,21 +47,22 @@ void reciever(){
    char x[1];
    int i = 0;
    int packetSize = CAN.parsePacket();
-   if(packetSize){
-      while (CAN.available()) {       
-        for(i=0;i<=0;i++){
-          x[i]  =(char)CAN.read();
-          Serial.flush();
-          
-        }
-      }
-     if(CAN.packetId() == 0x10){cmd = x[0];} 
-     
-     
-   }else{}
+   for(i=0;i<=5;i++){    
+       if(packetSize){
+          while (CAN.available()) {       
+            for(i=0;i<=0;i++){
+              x[i]  =(char)CAN.read();
+              Serial.flush();
+              
+            }
+          }
+         if(CAN.packetId() == 0x10){cmd = x[0];} 
+         
+         
+       }else{}
   
-  
-  }
+   }
+}
 
 void setup()
 {
