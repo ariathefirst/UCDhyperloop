@@ -26,7 +26,7 @@ char cmd;
 
 void sender(){
 
-  CAN.beginPacket(0x41);
+  CAN.beginPacket(0x23);
   CAN.write(FB_LSA + '0');
   CAN.write(FB_LSB + '0');
   CAN.write(ECB_LSA + '0');
@@ -55,7 +55,7 @@ void reciever(){
           
         }
       }
-     if(CAN.packetId() == 0x40){cmd = x[0];} // if pkt ID for frequency, send input frequency to VFD
+     if(CAN.packetId() == 0x10){cmd = x[0];} 
      
      
    }else{}
