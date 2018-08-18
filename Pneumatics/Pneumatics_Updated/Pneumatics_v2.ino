@@ -46,20 +46,16 @@ void receiveData(int *brakeCheck, int *brakeInput)
   if(packetSize) { //only receive data if it's size is nonzero
     Serial.println("packet received: ");
 
-    if(CAN.packetRtr()) { //check if incoming pack is a rtr to send back brake verification
+    if(CAN.packetRtr() == true) { //check if incoming pack is a rtr to send back brake verification
       Serial.print("brake check rtr");
       *brakeCheck = 1;
       
     } else if(CAN.packetId() == 0x10){ //otherwise check if it's a brake input command
-      do {
-        *brakeInput = CAN.read();
-        if(i<=16) {
-          Serial.print(".");
-          i++;
-        }
-      } while(CAN.available() == 0);
-
+      if(CAN.available() == 1 && CAN.peek() != -1) {
+        *brakeInput == CAN.read();
+      }
       Serial.print("brake input command");
+      
     }
   }
 }
