@@ -50,7 +50,7 @@ void loop() {
     if(CAN.packetId() == 0x23) {
       Serial.println("Brake verification");
       if(CAN.available() > 0 && CAN.peek() != -1) {
-        brakeCheck = Serial.read();
+        brakeCheck = CAN.read();
         Serial.println(brakeCheck);
       }
     }
