@@ -39,9 +39,9 @@ int sendPacketInt(int data, long id) { //used to send integers along the CAN bus
 	end = CAN.endPacket();
 
 	if(begin != 1 || end != 1) { //verify that data is sent correctly
-    	Serial.print("Failed to send packet: ");
-    	Serial.println(id);
-    	return 0;
+    		Serial.print("Failed to send packet: ");
+    		Serial.println(id);
+    		return 0;
   	} else {
 		return 1;
 	}
@@ -67,9 +67,9 @@ int sendRtr(long desiredId) { //request data from different subsystems based on 
 	end = CAN.endPacket();
 
 	if(begin != 1 || end != 1) { //verify that data is sent correctly
-    	Serial.print("Failed to send remote transmission request: ");
-    	Serial.println(desiredId);
-    	return 0;
+    		Serial.print("Failed to send remote transmission request: ");
+    		Serial.println(desiredId);
+    		return 0;
   	} else {
 		return 1;
 	}
