@@ -21,7 +21,7 @@ int brakeReturn; //brake configuration sent to master controller
 int verifyOutput; //enables output pin verification triggered by incoming rtr
 
 //send data to master controller via can bus
-void sendData(int data)
+int sendData(int data)
 {
   int begin;
   int end;
@@ -32,8 +32,10 @@ void sendData(int data)
 
   if(begin != 1 || end != 1) { //verify that data is sent correctly
     Serial.println("sendData failed!");
+    return 0;
   } else {
     Serial.println("packet sent");
+    return 1;
   }
   
 }
