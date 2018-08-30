@@ -1,6 +1,9 @@
 #include <CAN.h>
 #include <stdbool.h> //not sure if boolean data type is already included in CAN or Ardiuno
 
+int currentState = 1;
+int nextState;
+
 int togglePneumaticsInput(bool frictionBrakeToggle, bool eddyBrakeToggle, int pneumaticsState) { //input the current state and pick which brakes to toggle
 
 	bool pneumaticsBool[4];
@@ -30,7 +33,7 @@ int togglePneumaticsInput(bool frictionBrakeToggle, bool eddyBrakeToggle, int pn
 	return pneumaticsNextState;
 }
 
-int sendPacketInt(int data, long id) { //used to send integers along the CAN bus
+int sendPacketInt(long id, int data) { //used to send integers along the CAN bus
 	int begin;
 	int end;
 	
@@ -39,18 +42,18 @@ int sendPacketInt(int data, long id) { //used to send integers along the CAN bus
 	end = CAN.endPacket();
 
 	if(begin != 1 || end != 1) { //verify that data is sent correctly
-    		Serial.print("Failed to send packet: ");
-    		Serial.println(id);
-    		return 0;
+    	Serial.print("ERROR: Failed to send packet ");
+    	Serial.println(id);
+    	return 0;
   	} else {
 		return 1;
 	}
 }
 
-int receivePacketInt(long desiredId) { //used to receive integers from the CAN bus 
+int receivePacketInt(long id, int data) { //used to receive integers from the CAN bus 
 	int packetSize = CAN.parsePacket();
 
-	if(packetSize && CAN.packetRtr() != true && CAN.packetId() == desiredId) { //only receive packets if they have nonzero size
+	if(packetSize && CAN.packetRtr() != true && CAN.packetId() == id) { //only receive packets if they have nonzero size
 		if(CAN.available() && CAN.peek() != -1) {
 			return CAN.read();
 		} else {
@@ -59,17 +62,17 @@ int receivePacketInt(long desiredId) { //used to receive integers from the CAN b
 	}
 }
 
-int sendRtr(long desiredId) { //request data from different subsystems based on address
+int sendRtr(long id) { //request data from different subsystems based on address
 	int begin;
 	int end;
 
-	begin = CAN.beginPacket(desiredId, 1, true);
+	begin = CAN.beginPacket(id, 1, true);
 	end = CAN.endPacket();
 
 	if(begin != 1 || end != 1) { //verify that data is sent correctly
-    		Serial.print("Failed to send remote transmission request: ");
-    		Serial.println(desiredId);
-    		return 0;
+    	Serial.print("ERROR: Failed to send remote transmission request ");
+    	Serial.println(id);
+    	return 0;
   	} else {
 		return 1;
 	}
@@ -84,24 +87,31 @@ void setup() {
 	while(!Serial);
 
 	if(!CAN.begin(500E3)) { //halt operation if CAN won't start
-		Serial.println("Starting CAN failed!");
+		Serial.println("ERROR: Starting CAN failed");
 		while(1);
 	}
 }
 
 void loop() {
-
-	if(Serial.available() > 0) {
-		serialBuffer = Serial.read();
-	}
-
-	switch(dataTransferState) { //data transfer FSM for sequencing data sent along the CAN bus
+	switch(currentState) {
 		case 1:
-
-		case 2:
-
-		case 3:
-
-		default:
+			if(Serial.available() > 0) {
+				//parse serial input
+				if(inputPneumatics != currentPneumatics) { //placeholder
+					//send pneumatics
+					nextState = 4;
+				} else if(inputVelocity != currentVelocity) {
+					sendPacketInt(0x1B, inputVelocity);
+					//currentVelocity = inputVelocity; put this in state 6
+					nextState = 6;
+				} else {
+					sendRtr(0x1A);
+					nextState = 2;
+				}
+			} else {
+				sendRtr(0x1A);
+				nextState = 2;
+			}
 	}
+	currentState = nextState;
 }
