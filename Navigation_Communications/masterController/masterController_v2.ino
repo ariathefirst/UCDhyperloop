@@ -206,10 +206,8 @@ void loop() {
 			break;
 
 			end3:
-			Serial.println("ERROR: Propulsion failure");
-			sendPacketInt(0xA2, 1);
 			propErrorCount = 0;
-			nextState = 4;
+			nextState = 0;
 			break;
 
 	}
