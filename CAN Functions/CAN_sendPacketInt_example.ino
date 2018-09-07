@@ -1,6 +1,6 @@
 #include <CAN.h>
 
-int sendPacketInt(long id, int int1, int int2, int int3, int int4) { //used to send floats across the CAN bus
+int sendPacketInt(long id, int int1, int int2, int int3, int int4) { //used to send ints across the CAN bus
   int begin;
   int end;
 
