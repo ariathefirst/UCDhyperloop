@@ -8,7 +8,7 @@ int receivePacketFloat(long id, float *float1, float *float2) { //used to receiv
 
   union data {
     float num;
-    byte bytes[sizeof(fl)];
+    byte bytes[sizeof(num)];
   };
 
   union data data1;
