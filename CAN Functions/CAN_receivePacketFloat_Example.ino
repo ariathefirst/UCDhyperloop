@@ -7,7 +7,7 @@ int receivePacketFloat(long id, float *float1, float *float2) { //used to receiv
   int packetSize = CAN.parsePacket();
 
   union data {
-    float fl;
+    float num;
     byte bytes[sizeof(fl)];
   };
 
@@ -24,8 +24,8 @@ int receivePacketFloat(long id, float *float1, float *float2) { //used to receiv
     data2.bytes[2] = CAN.read();
     data2.bytes[3] = CAN.read();
 
-    *float1 = data1.fl;
-    *float2 = data2.fl;
+    *float1 = data1.num;
+    *float2 = data2.num;
 
     return 1;
   }
