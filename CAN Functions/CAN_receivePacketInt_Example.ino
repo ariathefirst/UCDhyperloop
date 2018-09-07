@@ -5,7 +5,7 @@ int num2;
 int num3;
 int num4;
 
-int receivePacketInt(long id, int *int1, int *int2, int *int3, int *int4) { //used to receive floats from the CAN bus
+int receivePacketInt(long id, int *int1, int *int2, int *int3, int *int4) { //used to receive ints from the CAN bus
   int packetSize = CAN.parsePacket();
 
   union data {
