@@ -5,15 +5,15 @@ int sendPacketFloat(long id, float float1, float float2) { //used to send floats
   int end;
 
   union data {
-  float fl;
-  byte bytes[sizeof(fl)];
+  float num;
+  byte bytes[sizeof(num)];
   };
 
   union data data1;
   union data data2;
 
-  data1.fl = float1;
-  data2.fl = float2;
+  data1.num = float1;
+  data2.num = float2;
    
   begin = CAN.beginPacket(id);
   CAN.write(data1.bytes[0]);
