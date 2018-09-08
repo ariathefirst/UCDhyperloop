@@ -7,12 +7,12 @@ int sendRtr(long id) { //request certain types data from different subsystems ba
 	end = CAN.endPacket();
 
 	if(begin != 1 || end != 1) { //verify that data is sent correctly
-    	Serial.print("ERROR: Failed to send remote transmission request ");
-    	Serial.println(id);
-    	return 0;
+    		Serial.print("ERROR: Failed to send remote transmission request ");
+    		Serial.println(id);
+    		return 0;
 
 	} else {
-    	return 1;
+    		return 1;
 	}
 }
 
@@ -55,10 +55,10 @@ int sendPacketInt(long id, int int0, int int1, int int2, int int3) { //used to s
 	if (begin != 1 || end != 1) { //verify that data is sent correctly
   		Serial.print("ERROR: Failed to send packet ");
 		Serial.println(id);
-    	return 0;
+    		return 0;
 
   	} else {
-    	return 1;
+    		return 1;
     }
 }
 
@@ -79,12 +79,12 @@ int receivePacketInt(long id, int *int0, int *int1, int *int2, int *int3) { //us
   				output[i].bytes[j] = CAN.read();
   			}
   		}
-
-    *int0 = output[0].num;
-    *int1 = output[1].num;
-    *int2 = output[2].num;
-    *int3 = output[3].num;
-	return 1;
+		
+		*int0 = output[0].num;
+		*int1 = output[1].num;
+		*int2 = output[2].num;
+		*int3 = output[3].num;
+		return 1;
 
 	} else {
   		return 0;
@@ -140,8 +140,8 @@ int receivePacketFloat(long id, float *float0, float *float1) { //used to receiv
 		for(i = 0; i < 2; i++) { //cycle through the 2 outputs
 			for(j = 0; j < sizeof(output[i].num); j++) { //cycle through the 4 bytes of each of the 2 outputs
 				output[i].bytes[j];
+    			}
     		}
-    	}
 
 		*float0 = output[0].num;
 		*float1 = output[1].num;
