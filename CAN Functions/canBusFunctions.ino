@@ -19,7 +19,7 @@ int sendRtr(long id) { //request certain types data from different subsystems ba
 int receiveRtr(long id) { //use to check if certain ids are requested
 	int packetSize = CAN.parsePacket();
 
-	if(packetSize && CAN.packetRtr() && CAN.packetId() = id) {
+	if(packetSize && CAN.packetRtr() && CAN.packetId() == id) {
 		return 1;
 	} else {
 		return 0;
