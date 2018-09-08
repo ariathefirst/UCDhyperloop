@@ -1,131 +1,205 @@
 #include <CAN.h>
-#include <stdbool.h> //not sure if boolean data type is already included in CAN or Ardiuno
+
+#define CHECK_INPUT 0
+#define AWAIT_PROP_DATA 1
+#define AWAIT_PROP_CONFIRM 2
+#define AWAIT_PNEUM_CONFIRM 3
+#define CHECK_INPUT_PROP_FAIL 4
+#define AWAIT_WHEEL_DATA 5
+#define AWAIT_WHEEL_CONFIRM 6
+#define AWAIT_PNEUM_CONFIRM_PROP_FAIL 7
+
+const int maxChars = 20;
+const int maxResponseTime = 1500; //delay time (milliseconds) until a subsystem is deemed malfunctional
+
+char inputString[maxChars];
+char inputType;
+char inputParam[maxChars - 2];
 
 int currentState = 0;
 int nextState;
 
-int errorCount = 0;
+int startTime;
 
-float propEncoderVel;
-float propEncoderDist;
+float propEncoderVel, propEncoderDist;
+float wheelEncoderVel, wheelEncoderDist;
 
-int togglePneumaticsInput(bool frictionBrakeToggle, bool eddyBrakeToggle, int pneumaticsState) { //input the current state and pick which brakes to toggle
+float inputVelocity;
 
-	bool pneumaticsBool[4];
-	int pneumaticsNextState;
-	int i;
-	int begin = 2; //set 2 as the default
-	int end = 1; //set 1 as the default
+void parseSerial(char *receivedChars[maxChars], int *charIndex) {
+	char charBuffer;
+  
+	*charIndex = 0;
 
-	for(i = 0; i <= 3; i++) {
-		 pneumaticsState % 2 == 1 ? pneumaticsBool[i] = true : pneumaticsBool[i] = false;
-		 pneumaticsState /= 2;
-	}
+	if(Serial.available() > 0) {
+		while(Serial.available() > 0 && *charIndex < maxChars) {
+			charBuffer = Serial.read();
 
-	if(frictionBrakeToggle == true) {
-		begin = 0;
-	}
+			if(*charIndex == maxChars - 1) {
+				*receivedChars[*charIndex] = '\n';
+				*charIndex++;
 
-	if(eddyBrakeToggle == true) {
-		end = 3;
-	}
-
-	for(i = begin; i <= end; i++) {
-		pneumaticsBool[i] == true ? pneumaticsBool[i] = false : pneumaticsBool[i] = true;
-	}
-
-	pneumaticsNextState = (8 * pneumaticsBool[0]) + (4 * pneumaticsBool[1]) + (2 *pneumaticsBool[2]) + (pneumaticsBool[3]);
-	return pneumaticsNextState;
+			} else if(charBuffer != '\n') {
+				*receivedChars[*charIndex] = charBuffer;
+				*charIndex++;
+			}
+		}
+	*receivedChars[*charIndex] = '\n';
+  }
+	return;
 }
 
-int sendPacketInt(long id, int data1, int data2, int data3, int data4) { //used to send integers along the CAN bus
-	int begin;
-	int end;
-
-	begin = CAN.beginPacket(id);
-	CAN.write(data1, 2); //integers are constrained to 2 bytes so they must be between 32768 and -32768
-	CAN.write(data2, 2);
-	CAN.write(data3, 2);
-	CAN.write(data4, 2);
-	end = CAN.endPacket(id);
-
-	if(begin != 1 || end != 1) { //verify that data is sent correctly
-    	Serial.print("ERROR: Failed to send packet ");
-    	Serial.println(id);
-    	return 0;
-  	} else {
-		return 1;
-	}
-}
-
-int sendPacketFloat(long id, float data1, float data2) { //used to send floats across the CAN bus
-	int begin;
-	int end;
-
-	begin = CAN.beginPacket(id);
-	CAN.write(data1, 4);
-	CAN.write(data2, 4);
-	end = CAN.endPacket(id);
-
-	if(begin != 1 || end != 1) { //verify that data is sent correctly
-    	Serial.print("ERROR: Failed to send packet ");
-    	Serial.println(id);
-    	return 0;
-  	} else {
-		return 1;
-	}
-}
-
-int sendRtr(long id) { //request certain types data from different subsystems based on address
-	int begin;
-	int end;
+int sendRtr(long id) { //request certain types data from different subsystems based on id
+	int begin, end;
 
 	begin = CAN.beginPacket(id, 1, true);
 	end = CAN.endPacket();
 
 	if(begin != 1 || end != 1) { //verify that data is sent correctly
-    	Serial.print("ERROR: Failed to send remote transmission request ");
-    	Serial.println(id);
-    	return 0;
-  	} else {
+		Serial.print("ERROR: Failed to send remote transmission request ");
+		Serial.println(id);
+		return 0;
+
+	} else {
 		return 1;
 	}
 }
 
-int receivePacketInt(long id, int *data1, int *data2, int *data3, int *data4) { //used to receive integers from the CAN bus 
+int receiveRtr(long id) { //use to check if certain ids are requested
 	int packetSize = CAN.parsePacket();
+
+	if(packetSize && CAN.packetRtr() && CAN.packetId() == id) {
+		return 1;
+
+	} else {
+		return 0;
+  }
+}
+
+int sendPacketInt(long id, int int0, int int1, int int2, int int3) { //used to send ints across the CAN
+	int begin, end;
+	int i, j; //data union array indexing
+
+	union data {
+		int num;
+		byte bytes[sizeof(num)];
+	};
+
+	union data input[4];
+
+	input[0].num = int0;
+	input[1].num = int1;
+	input[2].num = int2;
+	input[3].num = int3;
+   
+	begin = CAN.beginPacket(id);
+
+	for(i = 0; i < 4; i++) { //cycle through the 4 inputs
+		for(j = 0; j < sizeof(input[i].num); j++) { //cycle through the 2 bytes of each of the 4 inputs
+			CAN.write(input[i].bytes[j]);
+		}
+	}
+
+	end = CAN.endPacket();
+  
+	if (begin != 1 || end != 1) { //verify that data is sent correctly
+		Serial.print("ERROR: Failed to send packet ");
+		Serial.println(id);
+		return 0;
+
+	} else {
+		return 1;
+	}
+}
+
+int receivePacketInt(long id, int *int0, int *int1, int *int2, int *int3) { //used to receive ints from the CAN
+	int packetSize = CAN.parsePacket();
+	int i, j; //data union array indexing
+
+	union data {
+		int num;
+		byte bytes[sizeof(num)];
+	};
+
+	union data output[4];
 
 	if(packetSize && !CAN.packetRtr() && CAN.packetId() == id) {
-		*data1 = CAN.read();
-		*data2 = CAN.read();
-		*data3 = CAN.read();
-		*data4 = CAN.read();
+		for(i = 0; i < 4; i++) { //cycle through the 4 outputs
+			for(j = 0; j < sizeof(output[i].num); j++) { //cycle through the 2 bytes of each of the 4 outputs
+				output[i].bytes[j] = CAN.read();
+			}
+		}
+		
+		*int0 = output[0].num;
+		*int1 = output[1].num;
+		*int2 = output[2].num;
+		*int3 = output[3].num;
 		return 1;
-	}
 
-	return 0;
-}
-
-int receivePacketFloat(long id, float *data1, float *data2) { //used to receive floats from the CAN bus
-	int packetSize = CAN.parsePacket();
-
-	if(packetSize && !CAN.packetRtr() && CAN.packetId() == id) {
-		*data1 = CAN.read();
-		*data2 = CAN.read();
-		return 1;
-	}
-
-	return 0;
-}
-
-int receiveRtr(long id) {
-	int packetSize = CAN.parsePacket();
-
-	if(packetSize && CAN.packetRtr() && CAN.packetId() = id) {
-		return 1;
 	} else {
 		return 0;
 	}
+}
+
+int sendPacketFloat(long id, float float0, float float1) { //used to send floats across the CAN
+	int begin, end;
+	int i, j; //data union array indexing
+
+	union data {
+		float num;
+		byte bytes[sizeof(num)];
+	};
+
+	union data input[2];
+
+	input[0].num = float0;
+	input[1].num = float1;
+   
+	begin = CAN.beginPacket(id);
+
+	for(i = 0; i < 2; i++) { //cycle through the 2 inputs
+		for(j = 0; j < sizeof(input[i].num); j++) { //cycle through the 4 bytes of each of the 2 inputs
+			CAN.write(input[i].bytes[j]);
+		}
+	}
+  
+	end = CAN.endPacket();
+  
+	if (begin != 1 || end != 1) { //verify that data is sent correctly
+		Serial.print("ERROR: Failed to send packet ");
+		Serial.println(id);
+		return 0;
+
+	} else {
+		return 1;
+	}
+}
+
+int receivePacketFloat(long id, float *float0, float *float1) { //used to receive floats from the CAN
+	int packetSize = CAN.parsePacket();
+	int i, j; //data union array indexing
+
+	union data {
+		float num;
+		byte bytes[sizeof(num)];
+	};
+
+	union data output[2];
+
+	if(packetSize && !CAN.packetRtr() && CAN.packetId() == id) {
+		for(i = 0; i < 2; i++) { //cycle through the 2 outputs
+			for(j = 0; j < sizeof(output[i].num); j++) { //cycle through the 4 bytes of each of the 2 outputs
+				output[i].bytes[j];
+			}
+		}
+
+		*float0 = output[0].num;
+		*float1 = output[1].num;
+		return 1;
+
+	} else {
+		return 0;
+  }
 }
 
 void setup() {
@@ -140,77 +214,77 @@ void setup() {
 
 void loop() {
 	switch(currentState) {
-		case 0:
+		case CHECK_INPUT:
 			if(Serial.available() > 0) {
-				//parse serial input
-				if(inputPneumatics != currentPneumatics) { //placeholder
+				
+				if(inputType = 'p') {
 					//send pneumatics
-					nextState = 3;
-				} else if(inputVelocity != currentVelocity) { //placeholder
-					sendPacketFloat(0xA1, inputVelocity);
-					//currentVelocity = inputVelocity; put this in state 6
-					nextState = 2;
+					nextState = AWAIT_PNEUM_CONFIRM;
+				} else if(inputType = 'v') {
+		  			sendPacketFloat(0xA1, inputVelocity, 0);
+		  			//currentVelocity = inputVelocity; put this in state 6
+		  			nextState = AWAIT_PROP_CONFIRM;
 				} else {
-					sendRtr(0xA3);
-					nextState = 1;
+		  			sendRtr(0xA3);
+		  			nextState = AWAIT_PROP_DATA;
 				}
-			} else {
+	  		} else {
 				sendRtr(0xA3);
-				nextState = 1;
-			}
-			break;
+				nextState = AWAIT_PROP_DATA;
+	  		}
+	  		break;
 
-		case 1:
-			while(!receivePacketFloat(0xA3, &propEncoderVel, &propEncoderDist)) {
-				errorCount < 1000 ? errorCount++ : goto end1;
-			}
-			
-			Serial.print("Velocity: ");
-			Serial.print(propEncoderVel);
-			Serial.print("          Distance: ");
-			Serial.println(propEncoderDist);
-			propErrorCount = 0;
-			nextState = 0;
-			break;
+		case AWAIT_PROP_DATA:
+			startTime = millis();
+	  		while(!receivePacketFloat(0xA3, &propEncoderVel, &propEncoderDist)) {
+				if(millis() - startTime >= maxResponseTime) {
+					Serial.println("ERROR: Propulsion failure");
+	  				sendPacketInt(0xA2, 1, 0, 0, 0);
+	  				nextState = CHECK_INPUT_PROP_FAIL;
+	  				goto END1;
+				}
+	  		}
+	  
+	  		Serial.print("Velocity: ");
+	  		Serial.print(propEncoderVel);
+	 		Serial.print("          Distance: ");
+	  		Serial.println(propEncoderDist);
+	  		nextState = CHECK_INPUT;
 
-			end1:
-			Serial.println("ERROR: Propulsion failure");
-			sendPacketInt(0xA2, 1);
-			errorCount = 0;
-			nextState = 4;
-			break;
+	  		END1:
+	  		break;
 
-		case 2:
-			while(!receiveRtr(0xA1)) {
-				errorCount < 1000 ? errorCount++ : goto end2;
-			}
+		case AWAIT_PROP_CONFIRM:
+			startTime = millis();
+	  		while(!receiveRtr(0xA1)) {
+				if(millis() - startTime >= maxResponseTime) {
+					Serial.println("ERROR: Propulsion failure");
+	  				sendPacketInt(0xA2, 1, 0, 0, 0);
+	  				nextState = CHECK_INPUT_PROP_FAIL;
+	  				goto END2;
+				}
+	  		}
 
-			errorCount = 0;
-			nextState = 0;
-			break;
+	  		nextState = CHECK_INPUT;
 
-			end2:
-			Serial.println("ERROR: Propulsion failure");
-			sendPacketInt(0xA2, 1);
-			errorCount = 0;
-			nextState = 4;
-			break;
+	  		END2:
+	  		break;
 
-		case 3:
-			while(!receiveRtr(0xB1)) {
-				errorCount < 1000 ? errorCount++ : goto end3;
-			}
+		case AWAIT_PNEUM_CONFIRM:
+			startTime = millis();
+	  		while(!receiveRtr(0xB1)) {
+				if(millis() - startTime >= maxResponseTime) {
+					Serial.println("ERROR: Pneumatics failure");
+					//pneumatics error procedure goes here (not sure yet)
+					goto END3;
+				}
+	  		}
 
-			errorCount = 0;
-			nextState = 0;
-			break;
+	  		//nextState = ?;
 
-			end3:
-			propErrorCount = 0;
-			nextState = 0;
-			break;
-
-	}
-	
-	currentState = nextState;
+	  		END3:
+	  		break;
+  	}
+  
+  currentState = nextState;
 }
